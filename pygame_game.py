@@ -3,11 +3,19 @@ import random
 from collections import deque
 
 pygame.init()
+
 Font = pygame.font.Font(None, 48)
 SmallFont = pygame.font.Font(None, 28)
 Clock = pygame.time.Clock()
 
 Screen = pygame.display.set_mode((800, 600))
+FloorTile = pygame.image.load("assets/tiles/floor.png").convert()
+WallTile = pygame.image.load("assets/tiles/wall.png").convert()
+PlayerImage = pygame.image.load("assets/characters/player.png").convert_alpha()
+PlayerRightImage = pygame.image.load("assets/characters/player_right.png").convert_alpha()
+PlayerLeftImage = pygame.image.load("assets/characters/player_left.png").convert_alpha()
+PlayerDownImage = pygame.image.load("assets/characters/player_down.png").convert_alpha()
+PlayerUpImage = pygame.image.load("assets/characters/player_up.png").convert_alpha()
 pygame.display.set_caption("Terminal Dungeon")
 
 Running = True
@@ -200,6 +208,21 @@ def getMoveDistance(X, Y, Distance, Direction):
             Step -= 1
 
     return 0
+
+def drawPlayer():
+    if PlayerDirection == "left":
+        CurrentPlayerImage = PlayerLeftImage
+    elif PlayerDirection == "down":
+        CurrentPlayerImage = PlayerDownImage
+    elif PlayerDirection == "up":
+        CurrentPlayerImage = PlayerUpImage
+    else:
+        CurrentPlayerImage = PlayerRightImage
+
+    if PlayerInvulnerabilityTimer <= 0 or int(PlayerInvulnerabilityTimer * 10) % 2 == 0:
+        DrawY = PlayerY + PlayerOffsetY + PlayerIdleOffsetY
+        Screen.blit(CurrentPlayerImage, (PlayerX, DrawY))
+
 
 
 while Running:
@@ -424,13 +447,13 @@ while Running:
                 X = ColumnIndex * TILE_SIZE
                 Y = RowIndex * TILE_SIZE
                 if Tile == "#":
-                    pygame.draw.rect(Screen, WALL_COLOR, (X, Y, TILE_SIZE, TILE_SIZE))
+                    Screen.blit(WallTile, (X, Y))
                 elif Tile == "E":
                     pygame.draw.rect(Screen, (100, 55, 30), (X, Y, TILE_SIZE, TILE_SIZE))
                     pygame.draw.rect(Screen, (65, 40, 25), (X + 4, Y + 2, 24, 28), 2)
                     pygame.draw.circle(Screen, (220, 180, 70), (X + 23, Y + 16), 2)
                 else:
-                    pygame.draw.rect(Screen, FLOOR_COLOR, (X, Y, TILE_SIZE, TILE_SIZE))
+                    Screen.blit(FloorTile, (X, Y))
 
         # DEBUG: Draw enemy path
         for Column, Row in EnemyPath:
@@ -457,40 +480,8 @@ while Running:
             pygame.draw.rect(Screen, (40, 40, 40), (EnemyDrawX + 5, EnemyDrawY - 6, 3, 8)) # tentacle
             pygame.draw.rect(Screen, (40, 40, 40), (EnemyDrawX + 16, EnemyDrawY - 2, 3, 4))
 
+        drawPlayer()
 
-        if PlayerInvulnerabilityTimer <= 0 or int(PlayerInvulnerabilityTimer * 10) % 2 == 0:
-            # HERO
-            DrawY = PlayerY + PlayerOffsetY + PlayerIdleOffsetY
-
-            pygame.draw.rect(Screen, (220, 190, 120), (PlayerX + 8, DrawY, 16, 12))
-            pygame.draw.rect(Screen, (100, 65, 35), (PlayerX + 3, DrawY + 0, 26, 5))
-            pygame.draw.rect(Screen, (130, 85, 45), (PlayerX + 8, DrawY - 5, 16, 7))
-
-            if PlayerDirection == "right":
-                pygame.draw.rect(Screen, (30, 30, 30), (PlayerX + 19, DrawY + 4, 3, 3))
-
-            elif PlayerDirection == "left":
-                pygame.draw.rect(Screen, (30, 30, 30), (PlayerX + 11, DrawY + 4, 3, 3))
-
-            elif PlayerDirection == "down":
-                pygame.draw.rect(Screen, (30, 30, 30), (PlayerX + 11, DrawY + 4, 3, 3))
-                pygame.draw.rect(Screen, (30, 30, 30), (PlayerX + 19, DrawY + 4, 3, 3))
-
-            pygame.draw.rect(Screen, (60, 90, 130), (PlayerX + 6, DrawY + 12, 20, 12))
-
-            if PlayerAnimationFrame == 0:
-                pygame.draw.rect(Screen, (60, 90, 130), (PlayerX, DrawY + 15, 6, 10))
-                pygame.draw.rect(Screen, (60, 90, 130), (PlayerX + 26, DrawY + 11, 6, 10))
-            else:
-                pygame.draw.rect(Screen, (60, 90, 130), (PlayerX, DrawY + 11, 6, 10))
-                pygame.draw.rect(Screen, (60, 90, 130), (PlayerX + 26, DrawY + 15, 6, 10))
-
-            if PlayerAnimationFrame == 0:
-                pygame.draw.rect(Screen, (70, 55, 45), (PlayerX + 8, DrawY + 22, 6, 10))
-                pygame.draw.rect(Screen, (70, 55, 45), (PlayerX + 18, DrawY + 26, 6, 6))
-            else:
-                pygame.draw.rect(Screen, (70, 55, 45), (PlayerX + 8, DrawY + 26, 6, 6))
-                pygame.draw.rect(Screen, (70, 55, 45), (PlayerX + 18, DrawY + 22, 6, 10))
 
         LivesText = SmallFont.render(f"Lives: {PlayerLives}", True, (255, 255, 255))
         Screen.blit(LivesText, (660, 20))
@@ -498,8 +489,6 @@ while Running:
         Screen.blit(ScoreText, (660, 55))
 
     pygame.display.flip()
-
-
 
     for Event in pygame.event.get():
         if Event.type == pygame.QUIT:
